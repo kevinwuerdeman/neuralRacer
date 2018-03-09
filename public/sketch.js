@@ -1,16 +1,15 @@
 console.log('sup')
-var boids = [];
+let boids = [];
+let dead = [];
 
 function setup() {
   createCanvas(1000, 600);
 
   // Add an initial set of boids into the system
-  for (var i = 0; i < 100; i++) {
+  for (var i = 0; i < 10; i++) {
     boids[i] = new Boid(random(width), random(height));
   }
 }
-
-
 
 function draw() {
   background(51);
@@ -19,16 +18,23 @@ function draw() {
   line(150, 140, 150, 460); //Left
   line(850, 140, 850, 460); //Right
   // Run all the boids
-  for (var i = 0; i < boids.length; i++) {
+  for (let i = 0; i < boids.length; i++) {
     boids[i].run(boids);
+  }
+  if (!boids.length) {
+    reRun()
   }
 }
 
+function reRun() {
+  setup()
+  draw()
+}
 
 // Boid class
 // Methods for Separation, Cohesion, Alignment added
 function Boid(x, y) {
-  this.acceleration = createVector(0, -.3);
+  this.acceleration = createVector(0, 0);
   this.velocity = createVector(-2, 0);
   this.position = createVector(500, 530);
   this.r = 3.0;
@@ -36,7 +42,9 @@ function Boid(x, y) {
   this.maxforce = 0.05; // Maximum steering force
 }
 
+//Engine
 Boid.prototype.run = function(boids) {
+  console.log(boids.length)
   //this.flock(boids);
   this.update();
   this.borders();
@@ -76,16 +84,16 @@ Boid.prototype.update = function() {
 
 // A method that calculates and applies a steering force towards a target
 // STEER = DESIRED MINUS VELOCITY
-Boid.prototype.seek = function(target) {
-  var desired = p5.Vector.sub(target, this.position); // A vector pointing from the location to the target
-  // Normalize desired and scale to maximum speed
-  desired.normalize();
-  desired.mult(this.maxspeed);
-  // Steering = Desired minus Velocity
-  var steer = p5.Vector.sub(desired, this.velocity);
-  steer.limit(this.maxforce); // Limit to maximum steering force
-  return steer;
-}
+// Boid.prototype.seek = function(target) {
+//   var desired = p5.Vector.sub(target, this.position); // A vector pointing from the location to the target
+//   // Normalize desired and scale to maximum speed
+//   desired.normalize();
+//   desired.mult(this.maxspeed);
+//   // Steering = Desired minus Velocity
+//   var steer = p5.Vector.sub(desired, this.velocity);
+//   steer.limit(this.maxforce); // Limit to maximum steering force
+//   return steer;
+// }
 
 // Draw boid as a circle
 Boid.prototype.render = function() {
@@ -96,11 +104,27 @@ Boid.prototype.render = function() {
 
 // Wraparound
 Boid.prototype.borders = function() {
-  if (this.position.x < -this.r) /*this.position.x = width + this.r; */ this.velocity = createVector(0, 0);
-  if (this.position.y < -this.r) /*this.position.y = height + this.r; */ this.velocity = createVector(0, 0);
-  if (this.position.x > width + this.r) /* this.position.x = -this.r; */ this.velocity = createVector(0, 0);
-  if (this.position.y > height + this.r) /* this.position.y = -this.r; */ this.velocity = createVector(0, 0);
-  if (this.position.x > 150 && this.position.x < 850 && (this.position.y < 460 && this.position.y > 140)) this.velocity = this.velocity = createVector(0, 0);
+  let index = boids.indexOf(this);
+  if (this.position.x < -this.r) {
+    this.velocity = createVector(0, 0)
+    boids.splice(index, 1);
+  }
+  if (this.position.y < -this.r) {
+    this.velocity = createVector(0, 0)
+    boids.splice(index, 1);
+  }
+  if (this.position.x > width + this.r) {
+    this.velocity = createVector(0, 0)
+    boids.splice(index, 1);
+    }
+  if (this.position.y > height + this.r){
+    this.velocity = createVector(0, 0)
+    boids.splice(index, 1);
+  }
+  if (this.position.x > 150 && this.position.x < 850 && (this.position.y < 460 && this.position.y > 140)) {
+    this.velocity = createVector(0, 0)
+    boids.splice(index, 1);
+  }
 }
 
 // Separation
