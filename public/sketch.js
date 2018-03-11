@@ -1,78 +1,233 @@
-console.log('sup')
-let boids = [];
-let dead = [];
+let globalBoids = [];
 
 function setup() {
   createCanvas(1000, 600);
-
-  // Add an initial set of boids into the system
-  for (var i = 0; i < 10; i++) {
-    boids[i] = new Boid(random(width), random(height));
+  for (var i = 0; i < 40; i++) {
+    globalBoids[i] = new Boid();
   }
+
 }
+
+function Game() {
+  this.boids = [];
+  this.score = 0;
+  this.gen = 1 //[]; //array of networks
+  this.alives = 0 // number of alive boids
+  this.generation = 0
+  this.topScore = 0;
+}
+let Neuvol = new Neuroevolution({
+  population: 40,
+  network: [4, [4], 3]
+});
+
+
+Game.prototype.new = function () {
+  console.log(this.topScore)
+  this.score = 0;
+  this.generation++;
+  this.gen = Neuvol.nextGeneration();
+  if (this.generation > 1) {
+    for (let i = 0; i < this.boids.length; i++) {
+      globalBoids[i].reset()
+    }
+  }
+  this.boids = globalBoids
+  this.alives = this.boids.length;
+}
+
+Game.prototype.update = function () {
+  for (let i = 0; i < this.boids.length; i++) {
+    if (this.boids[i].alive) {
+      // Feed inputes to NN here!!!!!!!!!
+
+      let inputs = this.boids[i].findWalls()
+      // console.log(this.topScore)
+      let res = this.gen[i].compute(inputs);
+      let max = res.indexOf(Math.max(...res))
+
+      if (res[0] > .7 && max === 0) {
+       // console.log('north')
+        // this.boids[i].nudgeNorth()
+        this.boids[i].turnRight()
+      }
+       else if (res[1] > .7 && max === 1) {
+      //  console.log('south')
+      // this.boids[i].nudgeSouth()
+        this.boids[i].turnLeft()
+      }
+      else if (res[2] > .7 && max === 2) {
+       // console.log('east')
+        //this.boids[i].nudgeEast()
+        // this.boids[i].nudgeSouth()
+        this.boids[i].straight()
+      }
+      // else if (res[3] > .6 && max === 3) {
+      //  // console.log('west')
+      //   this.boids[i].nudgeWest()
+      //   // this.boids[i].nudgeNorth()
+      // }
+
+
+      this.boids[i].run()
+      if (this.boids[i].stuck) {
+        if (this.boids[i].score > this.topScore) {
+          this.topScore = this.boids[i].score;
+        }
+        this.boids[i].alive = false;
+        this.alives--;
+       // Neuvol.networkScore(this.gen[i], this.boids[i].score)  //save network score at TOD
+        Neuvol.networkScore(this.gen[i], this.score)
+        if (this.allDead()) {
+          //console.log(this.boids[i].score)
+          this.new();
+        }
+      }
+    }
+    //console.log(this.boids[i].score)
+    this.boids[i].score += this.boids[i].calcScore()
+    //console.log(this.boids[i].score)
+  }
+
+  this.score++
+  let me = this;
+  setTimeout(function () {
+    me.update();
+  }, 20)
+}
+
+Game.prototype.allDead = function () {
+  for (let i = 0; i < this.boids.length; i++) {
+    if (this.boids[i].alive) {
+      return false;
+    }
+  }
+  return true
+}
+
+let game = new Game()
+game.new()
+game.update()
 
 function draw() {
   background(51);
   line(150, 460, 850, 460); //bottom
   line(150, 140, 850, 140); //Top
   line(150, 140, 150, 460); //Left
-  line(850, 140, 850, 460); //Right
-  // Run all the boids
-  for (let i = 0; i < boids.length; i++) {
-    boids[i].run(boids);
+  line(850, 140, 850, 460); //right
+  for (var i = 0; i < globalBoids.length; i++) {
+    globalBoids[i].render();
   }
-  if (!boids.length) {
-    reRun()
-  }
-}
-
-function reRun() {
-  setup()
-  draw()
 }
 
 // Boid class
-// Methods for Separation, Cohesion, Alignment added
+
 function Boid(x, y) {
   this.acceleration = createVector(0, 0);
-  this.velocity = createVector(-2, 0);
-  this.position = createVector(500, 530);
+  this.velocity = createVector(2, 0);
+  this.position = createVector(500, 70);
   this.r = 3.0;
   this.maxspeed = 10;    // Maximum speed
   this.maxforce = 0.05; // Maximum steering force
+  this.alive = true;
+  this.stuck = false;
+  this.nudges = [this.nudgeNorth, this.nudgeSouth, this.nudgeEast, this.nudgeWest]
+  this.score = 0;
 }
 
+Boid.prototype.calcScore = function () {
+  if (this.position.y >= 460 && this.position.x >= 150) {
+    return (-this.position.dist(createVector(999, this.position.y)) * (this.velocity.x / Math.abs(this.velocity.x)) * 0.25)
+  } else if (this.position.y < 140 && this.position.x <= 850) {
+    return (this.position.dist(createVector(1, this.position.y)) * (this.velocity.x / Math.abs(this.velocity.x)) * 0.25)
+  } else if (this.position.x < 150) {
+    return (-this.position.dist(createVector(this.position.x, 599)) * (this.velocity.y / Math.abs(this.velocity.y)) * 0.25)
+  } else {
+    return (this.position.dist(createVector(this.position.x, 1)) * (this.velocity.y / Math.abs(this.velocity.y)) * 0.25)
+  }
+}
+
+// Boid.prototype.applyGrav = function () {
+//   if (this.position.y >= 460) {
+//     this.velocity.y += .5
+//   } else if (this.position.y)
+// }
+
+Boid.prototype.findWalls = function () {
+  let north;
+  let south;
+  let east;
+  let west;
+  //South Lane
+  if (this.position.y > 460 && (this.position.x >= 150 && this.position.x <= 850)) {
+    north = this.position.y - 460;
+    south = 600 - this.position.y;
+    east = 1000 - this.position.x;
+    west = this.position.x;
+    return [north, south, east, west]
+  }
+  //West Lane
+  if (this.position.x < 150 && (this.position.y >= 140 && this.position.y <= 460)) {
+    north = this.position.y;
+    south = 600 - this.position.y;
+    east = 150 - this.position.x
+    west = this.position.x;
+    return [north, south, east, west]
+  }
+  //North Lane
+  if (this.position.y < 140 && (this.position.x >= 150 && this.position.x <= 850)) {
+    north = this.position.y;
+    south = 140 - this.position.y;
+    east = 1000 - this.position.x;
+    west = this.position.x
+    return [north, south, east, west]
+  }
+  //East Lane
+  if (this.position.x > 850 && (this.position.y >= 140 && this.position.y <= 460)) {
+    north = this.position.y;
+    south = 600 - this.position.y;
+    east = 1000 - this.position.x;
+    west = this.position.x - 850;
+    return [north, south, east, west]
+  }
+  //Corner
+  else {
+    console.log('corner')
+    north = this.position.y;
+    south = 600 - this.position.y;
+    east = 1000 - this.position.x;
+    west = this.position.x
+    return [north, south, east, west]
+  }
+}
+
+Boid.prototype.reset = function () {
+  this.acceleration = createVector(0, 0);
+  this.velocity = createVector(2, 0);
+  this.position = createVector(500, 70);
+  this.r = 3.0;
+  this.maxspeed = 6;    // Maximum speed
+  this.maxforce = 0.05; // Maximum steering force
+  this.alive = true;
+  this.stuck = false;
+  this.score = 0;
+}
 //Engine
-Boid.prototype.run = function(boids) {
-  console.log(boids.length)
+Boid.prototype.run = function (boids) {
   //this.flock(boids);
   this.update();
   this.borders();
-  this.render();
+  //this.render();
 }
 
 // Forces go into acceleration
-Boid.prototype.applyForce = function(force) {
+Boid.prototype.applyForce = function (force) {
   this.acceleration.add(force);
 }
 
-// We accumulate a new acceleration each time based on three rules
-// Boid.prototype.flock = function(boids) {
-//  // var sep = this.separate(boids); // Separation
-//   // var ali = this.align(boids);    // Alignment
-//   //var coh = this.cohesion(boids); // Cohesion
-//   // Arbitrarily weight these forces
-//   sep.mult(2.5);
-//   // ali.mult(1.0);
-//   //coh.mult(1.0);
-//   // Add the force vectors to acceleration
-//   this.applyForce(sep);
-//   // this.applyForce(ali);
-//   //this.applyForce(coh);
-//}
 
 // Method to update location
-Boid.prototype.update = function() {
+Boid.prototype.update = function () {
   // Update velocity
   this.velocity.add(this.acceleration);
   // Limit speed
@@ -82,82 +237,117 @@ Boid.prototype.update = function() {
   this.acceleration.mult(0);
 }
 
-// A method that calculates and applies a steering force towards a target
-// STEER = DESIRED MINUS VELOCITY
-// Boid.prototype.seek = function(target) {
-//   var desired = p5.Vector.sub(target, this.position); // A vector pointing from the location to the target
-//   // Normalize desired and scale to maximum speed
-//   desired.normalize();
-//   desired.mult(this.maxspeed);
-//   // Steering = Desired minus Velocity
-//   var steer = p5.Vector.sub(desired, this.velocity);
-//   steer.limit(this.maxforce); // Limit to maximum steering force
-//   return steer;
-// }
-
 // Draw boid as a circle
-Boid.prototype.render = function() {
+Boid.prototype.render = function () {
   fill(127, 127);
   stroke(200);
-  ellipse(this.position.x, this.position.y, 16, 16);
+  // ellipse(this.position.x, this.position.y, 16, 16);
+  triangle(this.position.x, this.position.y, this.position.x + 20, this.position.y, this.position.x + 10, this.position.y - 20)
 }
 
 // Wraparound
-Boid.prototype.borders = function() {
-  let index = boids.indexOf(this);
+Boid.prototype.borders = function () {
   if (this.position.x < -this.r) {
     this.velocity = createVector(0, 0)
-    boids.splice(index, 1);
+    this.stuck = true;
   }
   if (this.position.y < -this.r) {
     this.velocity = createVector(0, 0)
-    boids.splice(index, 1);
+    this.stuck = true;
   }
   if (this.position.x > width + this.r) {
     this.velocity = createVector(0, 0)
-    boids.splice(index, 1);
-    }
-  if (this.position.y > height + this.r){
+    this.stuck = true;
+  }
+  if (this.position.y > height + this.r) {
     this.velocity = createVector(0, 0)
-    boids.splice(index, 1);
+    this.stuck = true;
   }
   if (this.position.x > 150 && this.position.x < 850 && (this.position.y < 460 && this.position.y > 140)) {
     this.velocity = createVector(0, 0)
-    boids.splice(index, 1);
+    this.stuck = true;
   }
 }
 
-// Separation
-// Method checks for nearby boids and steers away
-// Boid.prototype.separate = function(boids) {
-//   var desiredseparation = 25.0;
-//   var steer = createVector(0, 0);
-//   var count = 0;
-//   // For every boid in the system, check if it's too close
-//   for (var i = 0; i < boids.length; i++) {
-//     var d = p5.Vector.dist(this.position, boids[i].position);
-//     // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
-//     if ((d > 0) && (d < desiredseparation)) {
-//       // Calculate vector pointing away from neighbor
-//       var diff = p5.Vector.sub(this.position, boids[i].position);
-//       diff.normalize();
-//       diff.div(d); // Weight by distance
-//       steer.add(diff);
-//       count++; // Keep track of how many
-//     }
-//   }
-//   // Average -- divide by how many
-//   if (count > 0) {
-//     steer.div(count);
-//   }
+Boid.prototype.straight = function () {
+  if (Math.abs(this.velocity.x) > Math.abs(this.velocity.y)) {
+    if (this.velocity.x < 0) {
+      this.velocity.x -= 0.3;
+    } else {
+      this.velocity.x += 0.3;
+    }
+  } else {
+    if (this.velocity.y < 0) {
+      this.velocity.y -= 0.3;
+    } else {
+      this.velocity.y += 0.3
+    }
+  }
+}
 
-//   // As long as the vector is greater than 0
-//   if (steer.mag() > 0) {
-//     // Implement Reynolds: Steering = Desired - Velocity
-//     steer.normalize();
-//     steer.mult(this.maxspeed);
-//     steer.sub(this.velocity);
-//     steer.limit(this.maxforce);
-//   }
-//   return steer;
-// }
+Boid.prototype.turnLeft = function() {
+  if (Math.abs(this.velocity.x) > Math.abs(this.velocity.y)) {
+    if (this.velocity.x > 0) {
+     // this.velocity.x -= 0.15
+      this.velocity.y -= 0.1
+    } else {
+      //this.velocity.x += 0.15
+      this.velocity.y += 0.1
+    }
+  } else {
+    if (this.velocity.y > 0) {
+      this.velocity.x -= 0.1
+      //this.velocity.y -= 0.15
+    } else {
+      this.velocity.x += 0.1
+     // this.velocity.y += 0.15
+    }
+  }
+}
+
+Boid.prototype.turnRight = function() {
+  if (Math.abs(this.velocity.x) > Math.abs(this.velocity.y)) {
+    if (this.velocity.x > 0) {
+     // this.velocity.x -= 0.15;
+      this.velocity.y += 0.1;
+    } else {
+      //this.velocity.x += 0.15;
+      this.velocity.y -= 0.1;
+    }
+  } else {
+    if (this.velocity.y > 0) {
+      this.velocity.x -= 0.1
+      //this.velocity.y -= 0.15
+    } else {
+      this.velocity.x += 0.1
+     // this.velocity.y += 0.15
+    }
+  }
+}
+
+Boid.prototype.nudgeNorth = function () {
+ // this.velocity.y -= 0.5
+  this.velocity = createVector(0.05, -3);
+}
+Boid.prototype.nudgeSouth = function () {
+  //this.velocity.y += 0.5
+  this.velocity = createVector(0.05, 3);
+}
+Boid.prototype.nudgeEast = function () {
+  //this.velocity.x += 0.5
+  this.velocity = createVector(3, 0.05);
+}
+Boid.prototype.nudgeWest = function () {
+  //this.velocity.x -= 0.5
+  this.velocity = createVector(-3, 0.05);
+}
+
+
+let skipButton = document.getElementById('skip');
+skipButton.addEventListener('click', nextRound)
+
+function nextRound() {
+  globalBoids.forEach(boid => {
+    boid.stuck = true;
+  })
+}
