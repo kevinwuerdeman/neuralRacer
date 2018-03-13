@@ -1,37 +1,3 @@
-// var Neuroevolution = function (options) {
-//   const self = this;
-
-//   self.options = {
-//     activation: function (a) { //sigmoid function - reduce weighted sum to a point between 0 & 1
-//       let ap = (-a) / 1;
-//       return (1 / (1 + Math.exp(ap)))
-//     },
-//     randomClamped: function () {
-//       return Math.random() * 2 - 1;
-//     },
-//     // various factors and parameters (along with default values).
-// 		network: [1, [1], 1], // Perceptron network structure (1 hidden
-// 		// layer).
-// 		population: 50, // Population by generation.
-// 		elitism: 0.2, // Best networks kepts unchanged for the next
-// 		// generation (rate).
-// 		randomBehaviour: 0.2, // New random networks for the next generation
-// 		// (rate).
-// 		mutationRate: 0.1, // Mutation rate on the weights of synapses.
-// 		mutationRange: 0.5, // Interval of the mutation changes on the
-// 		// synapse weight.
-// 		historic: 0, // Latest generations saved.
-// 		lowHistoric: false, // Only save score (not the network).
-// 		scoreSort: -1, // Sort order (-1 = desc, 1 = asc).
-// 		nbChild: 1 // Number of children by breeding.
-//   }
-// }
-/**
- * Provides a set of classes and methods for handling Neuroevolution and
- * genetic algorithms.
- *
- * @param {options} An object of options for Neuroevolution.
- */
 var Neuroevolution = function (options) {
 	var self = this; // reference to the top scope of this module
 
@@ -364,7 +330,6 @@ var Neuroevolution = function (options) {
 			for (var i in g2.network.weights) {
 				// Genetic crossover
 				// 0.5 is the crossover factor.
-				// FIXME Really should be a predefined constant.
 				if (Math.random() <= 0.5) {
 					data.network.weights[i] = g2.network.weights[i];
 				}

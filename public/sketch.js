@@ -106,8 +106,8 @@ Game.prototype.allDead = function () {
 }
 
 let game = new Game()
-game.new()
-game.update()
+// game.new()
+// game.update()
 
 function draw() {
   background(51);
@@ -255,11 +255,11 @@ Boid.prototype.borders = function () {
     this.velocity = createVector(0, 0)
     this.stuck = true;
   }
-  if (this.position.x > width + this.r) {
+  if (this.position.x > width) {
     this.velocity = createVector(0, 0)
     this.stuck = true;
   }
-  if (this.position.y > height + this.r) {
+  if (this.position.y > height) {
     this.velocity = createVector(0, 0)
     this.stuck = true;
   }
@@ -344,7 +344,14 @@ Boid.prototype.nudgeWest = function () {
 
 
 let skipButton = document.getElementById('skip');
+let resetButton = document.getElementById('new');
+
 skipButton.addEventListener('click', nextRound)
+resetButton.addEventListener('click', () => {
+  //game = new Game();
+  game.new()
+  game.update()
+})
 
 function nextRound() {
   globalBoids.forEach(boid => {

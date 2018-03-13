@@ -6,7 +6,7 @@ import {logout} from '../store'
 
 const Home = () => (
   <div>
-    <h1>Hello World</h1>
+    <h1>Neural Racer</h1>
   </div>
 )
 
