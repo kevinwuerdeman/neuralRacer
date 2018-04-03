@@ -1,5 +1,12 @@
 let globalBoids = [];
 
+/**
+ * Create background and render agents
+ *
+ * @param {globalBoids} Collection of agents representing individual Nets.
+ *
+ */
+
 function setup() {
   createCanvas(1000, 600);
   for (var i = 0; i < 40; i++) {
@@ -7,6 +14,10 @@ function setup() {
   }
 
 }
+
+/**
+ * Define game logic for each round and record high score.
+ */
 
 function Game() {
   this.boids = [];
@@ -16,11 +27,17 @@ function Game() {
   this.generation = 0
   this.topScore = 0;
 }
+
+//Constructor for generation of neural networks
 let Neuvol = new Neuroevolution({
   population: 40,
   network: [4, [4], 3]
 });
 
+/**
+ * Run at the start of each round after last boid dies in previous round
+ *
+ */
 
 Game.prototype.new = function () {
   console.log(this.topScore)
@@ -36,38 +53,28 @@ Game.prototype.new = function () {
   this.alives = this.boids.length;
 }
 
+/**
+ * Runs throughout each round making networks decide what action to take to avoid walls
+ */
+
 Game.prototype.update = function () {
   for (let i = 0; i < this.boids.length; i++) {
     if (this.boids[i].alive) {
       // Feed inputes to NN here!!!!!!!!!
 
       let inputs = this.boids[i].findWalls()
-      // console.log(this.topScore)
       let res = this.gen[i].compute(inputs);
       let max = res.indexOf(Math.max(...res))
 
       if (res[0] > .7 && max === 0) {
-       // console.log('north')
-        // this.boids[i].nudgeNorth()
         this.boids[i].turnRight()
       }
        else if (res[1] > .7 && max === 1) {
-      //  console.log('south')
-      // this.boids[i].nudgeSouth()
         this.boids[i].turnLeft()
       }
       else if (res[2] > .7 && max === 2) {
-       // console.log('east')
-        //this.boids[i].nudgeEast()
-        // this.boids[i].nudgeSouth()
         this.boids[i].straight()
       }
-      // else if (res[3] > .6 && max === 3) {
-      //  // console.log('west')
-      //   this.boids[i].nudgeWest()
-      //   // this.boids[i].nudgeNorth()
-      // }
-
 
       this.boids[i].run()
       if (this.boids[i].stuck) {
@@ -76,17 +83,12 @@ Game.prototype.update = function () {
         }
         this.boids[i].alive = false;
         this.alives--;
-       // Neuvol.networkScore(this.gen[i], this.boids[i].score)  //save network score at TOD
-        Neuvol.networkScore(this.gen[i], this.score)
+        Neuvol.networkScore(this.gen[i], this.score) //save network score at TO
         if (this.allDead()) {
-          //console.log(this.boids[i].score)
           this.new();
         }
       }
     }
-    //console.log(this.boids[i].score)
-    this.boids[i].score += this.boids[i].calcScore()
-    //console.log(this.boids[i].score)
   }
 
   this.score++
@@ -106,8 +108,11 @@ Game.prototype.allDead = function () {
 }
 
 let game = new Game()
-// game.new()
-// game.update()
+
+
+/**
+ * draws and renders walls and boids
+ */
 
 function draw() {
   background(51);
@@ -121,7 +126,6 @@ function draw() {
 }
 
 // Boid class
-
 function Boid(x, y) {
   this.acceleration = createVector(0, 0);
   this.velocity = createVector(2, 0);
@@ -135,23 +139,9 @@ function Boid(x, y) {
   this.score = 0;
 }
 
-Boid.prototype.calcScore = function () {
-  if (this.position.y >= 460 && this.position.x >= 150) {
-    return (-this.position.dist(createVector(999, this.position.y)) * (this.velocity.x / Math.abs(this.velocity.x)) * 0.25)
-  } else if (this.position.y < 140 && this.position.x <= 850) {
-    return (this.position.dist(createVector(1, this.position.y)) * (this.velocity.x / Math.abs(this.velocity.x)) * 0.25)
-  } else if (this.position.x < 150) {
-    return (-this.position.dist(createVector(this.position.x, 599)) * (this.velocity.y / Math.abs(this.velocity.y)) * 0.25)
-  } else {
-    return (this.position.dist(createVector(this.position.x, 1)) * (this.velocity.y / Math.abs(this.velocity.y)) * 0.25)
-  }
-}
-
-// Boid.prototype.applyGrav = function () {
-//   if (this.position.y >= 460) {
-//     this.velocity.y += .5
-//   } else if (this.position.y)
-// }
+/**
+ * Creates inputs which are piped into each neural network
+ */
 
 Boid.prototype.findWalls = function () {
   let north;
@@ -213,16 +203,9 @@ Boid.prototype.reset = function () {
   this.score = 0;
 }
 //Engine
-Boid.prototype.run = function (boids) {
-  //this.flock(boids);
+Boid.prototype.run = function () {
   this.update();
   this.borders();
-  //this.render();
-}
-
-// Forces go into acceleration
-Boid.prototype.applyForce = function (force) {
-  this.acceleration.add(force);
 }
 
 
@@ -241,7 +224,6 @@ Boid.prototype.update = function () {
 Boid.prototype.render = function () {
   fill(127, 127);
   stroke(200);
-  // ellipse(this.position.x, this.position.y, 16, 16);
   triangle(this.position.x, this.position.y, this.position.x + 20, this.position.y, this.position.x + 10, this.position.y - 20)
 }
 
@@ -269,6 +251,11 @@ Boid.prototype.borders = function () {
   }
 }
 
+
+/**
+ * How Networks move straight
+ */
+
 Boid.prototype.straight = function () {
   if (Math.abs(this.velocity.x) > Math.abs(this.velocity.y)) {
     if (this.velocity.x < 0) {
@@ -285,70 +272,51 @@ Boid.prototype.straight = function () {
   }
 }
 
+/**
+ * How Networks turn left
+ */
+
 Boid.prototype.turnLeft = function() {
   if (Math.abs(this.velocity.x) > Math.abs(this.velocity.y)) {
     if (this.velocity.x > 0) {
-     // this.velocity.x -= 0.15
       this.velocity.y -= 0.1
     } else {
-      //this.velocity.x += 0.15
       this.velocity.y += 0.1
     }
   } else {
     if (this.velocity.y > 0) {
       this.velocity.x -= 0.1
-      //this.velocity.y -= 0.15
     } else {
       this.velocity.x += 0.1
-     // this.velocity.y += 0.15
     }
   }
 }
 
+/**
+ * How Networks turn right
+ */
+
 Boid.prototype.turnRight = function() {
   if (Math.abs(this.velocity.x) > Math.abs(this.velocity.y)) {
     if (this.velocity.x > 0) {
-     // this.velocity.x -= 0.15;
       this.velocity.y += 0.1;
     } else {
-      //this.velocity.x += 0.15;
       this.velocity.y -= 0.1;
     }
   } else {
     if (this.velocity.y > 0) {
       this.velocity.x -= 0.1
-      //this.velocity.y -= 0.15
     } else {
       this.velocity.x += 0.1
-     // this.velocity.y += 0.15
     }
   }
 }
-
-Boid.prototype.nudgeNorth = function () {
- // this.velocity.y -= 0.5
-  this.velocity = createVector(0.05, -3);
-}
-Boid.prototype.nudgeSouth = function () {
-  //this.velocity.y += 0.5
-  this.velocity = createVector(0.05, 3);
-}
-Boid.prototype.nudgeEast = function () {
-  //this.velocity.x += 0.5
-  this.velocity = createVector(3, 0.05);
-}
-Boid.prototype.nudgeWest = function () {
-  //this.velocity.x -= 0.5
-  this.velocity = createVector(-3, 0.05);
-}
-
 
 let skipButton = document.getElementById('skip');
 let resetButton = document.getElementById('new');
 
 skipButton.addEventListener('click', nextRound)
 resetButton.addEventListener('click', () => {
-  //game = new Game();
   game.new()
   game.update()
 })

@@ -1,5 +1,5 @@
-var Neuroevolution = function (options) {
-var self = this; // reference to the top scope of this module
+let Neuroevolution = function (options) {
+let self = this; // reference to the top scope of this module
 
 // Declaration of module parameters (options) and default values
 self.options = {
@@ -48,7 +48,7 @@ self.options = {
  * @return void
  */
 self.set = function (options) {
-  for (var i in options) {
+  for (let i in options) {
     if (this.options[i] != undefined) { // Only override if the passed in value
       // is actually defined.
       self.options[i] = options[i];
@@ -66,7 +66,7 @@ self.set(options);
  *
  * @constructor
  */
-var Neuron = function () {
+let Neuron = function () {
   this.value = 0;
   this.weights = [];
 }
@@ -79,7 +79,7 @@ var Neuron = function () {
  */
 Neuron.prototype.populate = function (nb) {
   this.weights = [];
-  for (var i = 0; i < nb; i++) {
+  for (let i = 0; i < nb; i++) {
     this.weights.push(self.options.randomClamped());
   }
 }
@@ -109,8 +109,8 @@ var Layer = function (index) {
  */
 Layer.prototype.populate = function (nbNeurons, nbInputs) {
   this.neurons = [];
-  for (var i = 0; i < nbNeurons; i++) {
-    var n = new Neuron();
+  for (let i = 0; i < nbNeurons; i++) {
+    let n = new Neuron();
     n.populate(nbInputs);
     this.neurons.push(n);
   }
@@ -125,7 +125,7 @@ Layer.prototype.populate = function (nbNeurons, nbInputs) {
  *
  * @constructor
  */
-var Network = function () {
+let Network = function () {
   this.layers = [];
 }
 
@@ -138,17 +138,17 @@ var Network = function () {
  * @return void
  */
 Network.prototype.perceptronGeneration = function (input, hiddens, output) {
-  var index = 0;
-  var previousNeurons = 0;
+  let index = 0;
+  let previousNeurons = 0;
   var layer = new Layer(index);
   layer.populate(input, previousNeurons); // Number of Inputs will be set to
   // 0 since it is an input layer.
   previousNeurons = input; // number of input is size of previous layer.
   this.layers.push(layer);
   index++;
-  for (var i in hiddens) {
+  for (let i in hiddens) {
     // Repeat same process as first layer for each hidden layer.
-    var layer = new Layer(index);
+    let layer = new Layer(index);
     layer.populate(hiddens[i], previousNeurons);
     previousNeurons = hiddens[i];
     this.layers.push(layer);
@@ -169,15 +169,15 @@ Network.prototype.perceptronGeneration = function (input, hiddens, output) {
  * @return Network data.
  */
 Network.prototype.getSave = function () {
-  var datas = {
+  let datas = {
     neurons: [], // Number of Neurons per layer.
     weights: [] // Weights of each Neuron's inputs.
   };
 
-  for (var i in this.layers) {
+  for (let i in this.layers) {
     datas.neurons.push(this.layers[i].neurons.length);
-    for (var j in this.layers[i].neurons) {
-      for (var k in this.layers[i].neurons[j].weights) {
+    for (let j in this.layers[i].neurons) {
+      for (let k in this.layers[i].neurons[j].weights) {
         // push all input weights of each Neuron of each Layer into a flat
         // array.
         datas.weights.push(this.layers[i].neurons[j].weights[k]);
@@ -194,16 +194,16 @@ Network.prototype.getSave = function () {
  * @return void
  */
 Network.prototype.setSave = function (save) {
-  var previousNeurons = 0;
-  var index = 0;
-  var indexWeights = 0;
+  let previousNeurons = 0;
+  let index = 0;
+  let indexWeights = 0;
   this.layers = [];
-  for (var i in save.neurons) {
+  for (let i in save.neurons) {
     // Create and populate layers.
     var layer = new Layer(index);
     layer.populate(save.neurons[i], previousNeurons);
-    for (var j in layer.neurons) {
-      for (var k in layer.neurons[j].weights) {
+    for (let j in layer.neurons) {
+      for (let k in layer.neurons[j].weights) {
         // Apply neurons weights to each Neuron.
         layer.neurons[j].weights[k] = save.weights[indexWeights];
 
@@ -224,18 +224,18 @@ Network.prototype.setSave = function (save) {
  */
 Network.prototype.compute = function (inputs) {
   // Set the value of each Neuron in the input layer.
-  for (var i in inputs) {
+  for (let i in inputs) {
     if (this.layers[0] && this.layers[0].neurons[i]) {
       this.layers[0].neurons[i].value = inputs[i];
     }
   }
 
-  var prevLayer = this.layers[0]; // Previous layer is input layer.
-  for (var i = 1; i < this.layers.length; i++) {
-    for (var j in this.layers[i].neurons) {
+  let prevLayer = this.layers[0]; // Previous layer is input layer.
+  for (let i = 1; i < this.layers.length; i++) {
+    for (let j in this.layers[i].neurons) {
       // For each Neuron in each layer.
-      var sum = 0;
-      for (var k in prevLayer.neurons) {
+      let sum = 0;
+      for (let k in prevLayer.neurons) {
         // Every Neuron in the previous layer is an input to each Neuron in
         // the next layer.
         sum += prevLayer.neurons[k].value *
@@ -249,9 +249,9 @@ Network.prototype.compute = function (inputs) {
   }
 
   // All outputs of the Network.
-  var out = [];
-  var lastLayer = this.layers[this.layers.length - 1];
-  for (var i in lastLayer.neurons) {
+  let out = [];
+  let lastLayer = this.layers[this.layers.length - 1];
+  for (let i in lastLayer.neurons) {
     out.push(lastLayer.neurons[i].value);
   }
   return out;
@@ -269,7 +269,7 @@ Network.prototype.compute = function (inputs) {
  * @param {score}
  * @param {network}
  */
-var Genome = function (score, network) {
+let Genome = function (score, network) {
   this.score = score || 0;
   this.network = network || null;
 }
@@ -283,7 +283,7 @@ var Genome = function (score, network) {
  *
  * @constructor
  */
-var Generation = function () {
+let Generation = function () {
   this.genomes = [];
 }
 
@@ -323,11 +323,11 @@ Generation.prototype.addGenome = function (genome) {
  * @param {nbChilds} Number of offspring (children).
  */
 Generation.prototype.breed = function (g1, g2, nbChilds) {
-  var datas = [];
-  for (var nb = 0; nb < nbChilds; nb++) {
+  let datas = [];
+  for (let nb = 0; nb < nbChilds; nb++) {
     // Deep clone of genome 1.
-    var data = JSON.parse(JSON.stringify(g1));
-    for (var i in g2.network.weights) {
+    let data = JSON.parse(JSON.stringify(g1));
+    for (let i in g2.network.weights) {
       // Genetic crossover
       // 0.5 is the crossover factor.
       if (Math.random() <= 0.5) {
@@ -336,7 +336,7 @@ Generation.prototype.breed = function (g1, g2, nbChilds) {
     }
 
     // Perform mutation on some weights.
-    for (var i in data.network.weights) {
+    for (let i in data.network.weights) {
       if (Math.random() <= self.options.mutationRate) {
         data.network.weights[i] += Math.random() *
           self.options.mutationRange *
@@ -356,9 +356,9 @@ Generation.prototype.breed = function (g1, g2, nbChilds) {
  * @return Next generation data array.
  */
 Generation.prototype.generateNextGeneration = function () {
-  var nexts = [];
+  let nexts = [];
 
-  for (var i = 0; i < Math.round(self.options.elitism *
+  for (let i = 0; i < Math.round(self.options.elitism *
     self.options.population); i++) {
     if (nexts.length < self.options.population) {
       // Push a deep copy of ith Genome's Nethwork.
@@ -367,10 +367,10 @@ Generation.prototype.generateNextGeneration = function () {
     }
   }
 
-  for (var i = 0; i < Math.round(self.options.randomBehaviour *
+  for (let i = 0; i < Math.round(self.options.randomBehaviour *
     self.options.population); i++) {
-    var n = JSON.parse(JSON.stringify(this.genomes[0].network));
-    for (var k in n.weights) {
+    let n = JSON.parse(JSON.stringify(this.genomes[0].network));
+    for (let k in n.weights) {
       n.weights[k] = self.options.randomClamped();
     }
     if (nexts.length < self.options.population) {
@@ -378,13 +378,13 @@ Generation.prototype.generateNextGeneration = function () {
     }
   }
 
-  var max = 0;
+  let max = 0;
   while (true) {
-    for (var i = 0; i < max; i++) {
+    for (let i = 0; i < max; i++) {
       // Create the children and push them to the nexts array.
-      var childs = this.breed(this.genomes[i], this.genomes[max],
+      let childs = this.breed(this.genomes[i], this.genomes[max],
         (self.options.nbChild > 0 ? self.options.nbChild : 1));
-      for (var c in childs) {
+      for (let c in childs) {
         nexts.push(childs[c].network);
         if (nexts.length >= self.options.population) {
           // Return once number of children is equal to the
@@ -409,9 +409,9 @@ Generation.prototype.generateNextGeneration = function () {
  *
  * @constructor
  */
-var Generations = function () {
+let Generations = function () {
   this.generations = [];
-  var currentGeneration = new Generation();
+  let currentGeneration = new Generation();
 }
 
 /**
@@ -425,10 +425,10 @@ var Generations = function () {
 Generations.prototype.firstGeneration = function (input, hiddens, output) {
   // FIXME input, hiddens, output unused.
 
-  var out = [];
-  for (var i = 0; i < self.options.population; i++) {
+  let out = [];
+  for (let i = 0; i < self.options.population; i++) {
     // Generate the Network and save it.
-    var nn = new Network();
+    let nn = new Network();
     nn.perceptronGeneration(self.options.network[0],
       self.options.network[1],
       self.options.network[2]);
@@ -450,7 +450,7 @@ Generations.prototype.nextGeneration = function () {
     return false;
   }
 
-  var gen = this.generations[this.generations.length - 1]
+  let gen = this.generations[this.generations.length - 1]
     .generateNextGeneration();
   this.generations.push(new Generation());
   return gen;
@@ -489,7 +489,7 @@ self.restart = function () {
  * @return Neural Network array for next Generation.
  */
 self.nextGeneration = function () {
-  var networks = [];
+  let networks = [];
 
   if (self.generations.generations.length == 0) {
     // If no Generations, create first.
@@ -502,9 +502,9 @@ self.nextGeneration = function () {
   }
 
   // Create Networks from the current Generation.
-  var nns = [];
-  for (var i in networks) {
-    var nn = new Network();
+  let nns = [];
+  for (let i in networks) {
+    let nn = new Network();
     nn.setSave(networks[i]);
     nns.push(nn);
   }
@@ -512,11 +512,11 @@ self.nextGeneration = function () {
   if (self.options.lowHistoric) {
     // Remove old Networks.
     if (self.generations.generations.length >= 2) {
-      var genomes =
+      let genomes =
         self.generations
           .generations[self.generations.generations.length - 2]
           .genomes;
-      for (var i in genomes) {
+      for (let i in genomes) {
         delete genomes[i].network;
       }
     }
